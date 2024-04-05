@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Step 1: Install NFS Packages
+echo "Step 1: Installing NFS packages..."
+sudo yum install -y nfs-utils
+
+# Step 2: Enable and Start NFS Server
+echo "Step 2: Enabling and starting NFS server service..."
+sudo systemctl enable nfs-server.service
+sudo systemctl start nfs-server.service
+
+# Step 3: Configure Firewall
+echo "Step 3: Configuring firewall..."
+sudo firewall-cmd --permanent --add-service=nfs
+sudo firewall-cmd --permanent --add-service=mountd
+sudo firewall-cmd --permanent --add-service=rpc-bind
+sudo firewall-cmd --reload
+
+# Step 4: Create NFS Share
+echo "Step 4: Creating NFS share..."
+sudo mkdir /foldername
+sudo chown username:root /foldername/
+sudo chmod 770 /foldername/
+echo "/foldername ipaddress.0./24(rw,sync)" | sudo tee -a /etc/exports > /dev/null
+sudo exportfs -avr
+
+# Step 5: Create files to Share
+echo "Step 5: Creating files to share..."
+cd /foldername
+touch file1 file2 
+ls

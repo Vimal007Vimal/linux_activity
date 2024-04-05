@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Update Package Repository
+echo "Updating Package Repository..."
+sudo yum update -y
+
+# Install Apache HTTP Server
+echo "Installing Apache HTTP Server..."
+sudo yum install httpd -y
+
+# Confirm Installation
+echo "Confirming Apache Installation..."
+httpd -v
+
+# Start Apache Service
+echo "Starting Apache Service..."
+sudo systemctl start httpd
+
+# Enable Apache to Start on Boot
+echo "Enabling Apache to Start on Boot..."
+sudo systemctl enable httpd
+
+# Verify Apache Status
+echo "Verifying Apache Status..."
+sudo systemctl status httpd
+
+# Adjust Firewall Rules
+if command -v firewall-cmd &> /dev/null; then
+    echo "Adjusting Firewall Rules..."
+    sudo firewall-cmd --zone=public --permanent --add-service=http
+    sudo firewall-cmd --reload
+fi
+
+
+# Navigate to Web Directory
+echo "Navigating to Web Directory..."
+cd /var/www/html 
+
+# Create index.html File
+echo "Creating index.html File..."
+sudo touch index.html
+
+# Write Basic HTML Code to index.html File
+echo "Writing HTML code to index.html File..."
+sudo tee index.html > /dev/null <<EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to My Website</title>
+</head>
+<body>
+    <h1>Welcome to My Website</h1>
+    <p>This is a basic HTML page served by Apache HTTP Server.</p>
+</body>
+</html>
+EOF
+
+echo "Apache installation, setup, and web directory creation completed."
+# Set permissions for index.html file
+echo "Setting permissions for index.html file..."
+sudo chmod +x html/index.html
+
+echo "Apache installation and setup completed."
+
+# Access the Default Apache Page
+default_page="http://localhost"
+echo "Accessing the Default Apache Page at: $default_page"
+xdg-open "$default_page"

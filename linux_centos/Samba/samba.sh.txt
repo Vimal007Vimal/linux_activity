@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Step 1: Install Samba
+echo "Installing Samba..."
+sudo yum -y install samba samba-client samba-common
+
+# Check Samba Version
+echo "Checking Samba version..."
+smbd --version
+
+# Step 3: Backup smb.conf
+echo "Backing up smb.conf..."
+sudo cp /etc/samba/smb.conf /etc/samba/smb.conf_orig
+
+# Step 4: Create directory and set permissions
+echo "Creating directory for anonymous share..."
+sudo mkdir -p /samba/anonymous_shared_directory
+sudo chmod -R 0775 /samba/anonymous_shared_directory
+sudo chown -R nobody:nobody /samba/anonymous_shared_directory
+
+# Step 5: Configure smb.conf
+echo "Configuring smb.conf..."
+sudo tee /etc/samba/smb.conf > /dev/null <<EOF
+[global]
+workgroup = WORKGROUP
+security = user
+netbios name = centos7
+printcap name = cups
+Idmap config Eig * : backend = tdb
+cups options = raw
+map to guest = bad user
+
+[Anonymous]
+comment = anonymous file share
+path = /samba/anonymous_shared_directory
+browseable = yes
+writable = yes
+guest ok = yes
+guest only = yes
+read only = no
+force user = nobody
+EOF
+
+# Step 6: Verify Samba Settings
+echo "Verifying Samba settings..."
+testparm /etc/samba/smb.conf
+
+# Step 7: Configure Firewall
+echo "Configuring firewall..."
+sudo firewall-cmd --permanent --add-port=137/tcp
+sudo firewall-cmd --permanent --add-port=138/tcp
+sudo firewall-cmd --permanent --add-port=139/tcp
+sudo firewall-cmd --permanent --add-port=445/tcp
+sudo firewall-cmd --permanent --add-port=901/tcp
+sudo firewall-cmd --reload
+
+# Step 8: Start Samba Service
+echo "Starting Samba service..."
+sudo systemctl start smb.service
+sudo systemctl enable smb.service
+sudo systemctl status smb.service
+
+# Step 9: Create a file to send
+echo "Creating a file in the shared directory..."
+sudo touch /samba/anonymous_shared_directory/file1
+
+echo "Samba server setup completed."

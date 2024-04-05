@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Step 1: Check your IP
+echo "Step 1: Checking your IP..."
+ip a
+
+# Step 2: Install NTP
+echo "Step 2: Installing NTP..."
+sudo yum install -y ntp
+
+# Step 3: Edit the NTP Configuration
+echo "Step 3: Editing NTP Configuration..."
+sudo sed -i '/^restrict/s/^#//' /etc/ntp.conf
+sudo sed -i '/^restrict/s/youripaddress/YOUR_IP_ADDRESS/' /etc/ntp.conf
+sudo tee -a /etc/ntp.conf > /dev/null <<EOF
+
+server 0.asia.pool.ntp.org iburst
+server 1.asia.pool.ntp.org iburst
+server 2.asia.pool.ntp.org iburst
+server 3.asia.pool.ntp.org iburst
+EOF
+
+# Step 4: Firewall Configuration
+echo "Step 4: Configuring firewall..."
+sudo firewall-cmd --add-service=ntp --permanent
+sudo firewall-cmd --reload
+
+# Step 5: Start NTP Service
+echo "Step 5: Starting NTP Service..."
+sudo systemctl start ntpd
+sudo systemctl enable ntpd
+sudo systemctl status ntpd
+
+# Step 6: Check NTP Connection
+echo "Step 6: Checking NTP connection..."
+ntpq -p
+
+# Check the connection between the pool server
+echo "Checking the connection between the pool server..."
+ntpdate -q 2.asia.pool.ntp.org

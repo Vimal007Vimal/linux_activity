@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Step 1: Install packages
+echo "Step 1: Installing NTP packages..."
+sudo yum install -y ntpdate
+sudo yum install -y ntp
+
+# Step 2: Edit the NTP Configuration File
+echo "Step 2: Editing NTP Configuration..."
+sudo sed -i '/^server/s/^/#/' /etc/ntp.conf
+sudo tee -a /etc/ntp.conf > /dev/null <<EOF
+
+server SERVER_IP_ADDRESS prefer iburst
+EOF
+
+# Step 3: Start the NTP Service
+echo "Step 3: Starting NTP service..."
+sudo systemctl start ntpd
+sudo systemctl enable ntpd
+sudo systemctl status ntpd
+
+# Step 4: Check the server response
+echo "Step 4: Checking server response..."
+ntpdate SERVER_IP_ADDRESS
+
+# Step 5: Check the connection
+echo "Step 5: Checking the connection..."
+ntpq -p

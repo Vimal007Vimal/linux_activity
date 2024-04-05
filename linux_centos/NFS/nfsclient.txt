@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Step 1: Install NFS Packages
+echo "Step 1: Installing NFS packages on the client machine..."
+sudo yum install -y nfs-utils
+
+# Step 2: Verify NFS Share
+echo "Step 2: Verifying NFS share on the server..."
+sudo showmount -e ipaddress
+
+# Step 3: Mount NFS Share
+echo "Step 3: Mounting NFS share on the client machine..."
+sudo mount -t nfs -o sync ipaddress:/foldername /media
+
+# Step 4: Verify Mount
+echo "Step 4: Verifying mount..."
+df -h
+cd /media/
+ls

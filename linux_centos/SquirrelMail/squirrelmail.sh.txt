@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# 1. Check IP
+echo "Checking IP..."
+ifconfig
+
+# 2. Set Hostname
+echo "Setting hostname..."
+sudo hostnamectl set-hostname rhel7.yourhostname.local
+sudo sed -i '/rhel7.yourhostname.local/s/$/ rhel7/' /etc/hosts
+
+# 3. Disable SELinux
+echo "Disabling SELinux..."
+sudo setenforce 0
+sudo sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+
+# 4. Install EPEL Repository
+echo "Installing EPEL Repository..."
+sudo yum install -y epel-release
+
+# 5. Allow Apache Default Port
+echo "Allowing Apache default port..."
+sudo firewall-cmd --permanent --add-port=80/tcp
+sudo firewall-cmd --reload
+
+# 6. Install Postfix Package
+echo "Installing Postfix Package..."
+sudo yum install postfix -y
+
+# 7. Configure Postfix
+echo "Configuring Postfix..."
+sudo sed -i '/^myhostname/s/.*/myhostname = rhel7.yourhostname.local/' /etc/postfix/main.cf
+sudo sed -i '/^mydomain/s/.*/mydomain = yourdomainname.local/' /etc/postfix/main.cf
+sudo sed -i '/^myorigin/s/.*/myorigin = $mydomain/' /etc/postfix/main.cf
+sudo sed -i '/^inet_interfaces/s/.*/inet_interfaces = all/' /etc/postfix/main.cf
+sudo sed -i '/^inet_protocols/s/.*/inet_protocols = all/' /etc/postfix/main.cf
+sudo sed -i '/^mydestination/s/^/#/' /etc/postfix/main.cf
+sudo sed -i '/^mydestination/s/$/, $mydomain/' /etc/postfix/main.cf
+sudo sed -i '/^mynetworks/s/$/ youripaddress.0\/24, 127.0.0.0\/8/' /etc/postfix/main.cf
+sudo sed -i '/^home_mailbox/s/.*/home_mailbox = Maildir\//' /etc/postfix/main.cf
+
+# 8. Start/Restart Postfix
+echo "Starting/Restarting Postfix..."
+sudo systemctl restart postfix
+sudo systemctl enable postfix
+sudo systemctl status postfix
+
+# 9. Install Dovecot Package
+echo "Installing Dovecot Package..."
+sudo yum install -y dovecot
+
+# 10. Configure Dovecot
+echo "Configuring Dovecot..."
+sudo sed -i '/^protocols/s/.*/protocols = imap pop3 lmtp/' /etc/dovecot/dovecot.conf
+sudo sed -i '/^mail_location/s/.*/mail_location = maildir:~\/Maildir/' /etc/dovecot/conf.d/10-mail.conf
+sudo sed -i '/^auth_mechanisms/s/.*/auth_mechanisms = plain login/' /etc/dovecot/conf.d/10-auth.conf
+sudo sed -i '/^mode/s/^/#/' /etc/dovecot/conf.d/10-master.conf
+sudo sed -i '/^user/s/^/#/' /etc/dovecot/conf.d/10-master.conf
+sudo sed -i '/^group/s/^/#/' /etc/dovecot/conf.d/10-master.conf
+sudo systemctl start dovecot
+sudo systemctl enable dovecot
+sudo systemctl status dovecot
+
+# 11. Install Squirrelmail Package
+echo "Installing Squirrelmail Package..."
+sudo yum install -y squirrelmail
+
+# 12. Configure Squirrelmail
+echo "Configuring Squirrelmail..."
+cd /usr/share/squirrelmail/config || exit
+./conf.pl <<EOF
+1
+1
+S
+R
+2
+1
+rhel7.local
+3
+2
+S
+Q
+EOF
+
+# 13. Create Squirrelmail vhost in Apache config file
+echo "Creating Squirrelmail vhost in Apache config file..."
+sudo tee -a /etc/httpd/conf/httpd.conf > /dev/null <<EOF
+Alias /webmail /usr/share/squirrelmail
+<Directory /usr/share/squirrelmail>
+Options Indexes FollowSymLinks
+RewriteEngine On
+AllowOverride All
+DirectoryIndex index.php
+Order allow,deny
+Allow from all
+</Directory>
+EOF
+
+# Restart Apache
+echo "Restarting Apache..."
+sudo systemctl restart httpd
+sudo systemctl enable httpd
+sudo systemctl status httpd
+
+# Allow HTTPD to connect to network
+echo "Allowing HTTPD to connect to network..."
+sudo setsebool httpd_can_network_connect=1
+
+echo "Setup completed. Access Squirrelmail via: http://youripaddress/webmail"

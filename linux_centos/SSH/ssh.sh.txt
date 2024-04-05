@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Step 1: Install OpenSSH server and client packages
+echo "Installing OpenSSH server and client packages..."
+sudo yum install -y openssh-server openssh-clients
+
+# Step 2: Start SSH Service
+echo "Starting SSH service..."
+sudo systemctl start sshd
+
+# Step 3: Verify SSH port
+echo "Verifying SSH port..."
+sudo netstat -tulpn | grep :22
+
+# Step 4: Check SSH daemon status
+echo "Checking SSH daemon status..."
+sudo systemctl status sshd
+
+# Step 5: OpenSSH Server Configuration
+echo "Configuring OpenSSH server..."
+sudo sed -i 's/#Port 22/Port 8089/' /etc/ssh/sshd_config
+sudo sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo sed -i 's/#MaxSessions 10/MaxSessions 3/' /etc/ssh/sshd_config
+
+# Step 6: Firewall Configuration
+echo "Configuring firewall..."
+sudo semanage port -a -t ssh_port_t -p tcp 8089
+sudo firewall-cmd --add-port=8089/tcp --permanent
+sudo firewall-cmd --reload
+
+# Step 7: Enable OpenSSH Service
+echo "Enabling OpenSSH service..."
+sudo systemctl enable sshd
+
+# Restart SSH service
+echo "Restarting SSH service..."
+sudo systemctl restart sshd
+
+# Step 8: Check IP Address
+echo "Checking server's IP address..."
+ifconfig
+
+echo "OpenSSH server setup completed."

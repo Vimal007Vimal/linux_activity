@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Viewing Disk Information
+echo "Disk Information:"
+fdisk -l
+
+# Creating a New Partition
+echo "Creating a New Partition:"
+fdisk /dev/sdb <<EOF
+n
+p
+1
+
+
+t
+8e
+w
+EOF
+
+# Displaying Partition Information
+echo "Partition Information:"
+fdisk -l /dev/sdb
+
+# Creating a Physical Volume
+echo "Creating a Physical Volume:"
+pvcreate /dev/sdb1
+
+# Displaying Physical Volume Information
+echo "Physical Volume Information:"
+pvs
+
+# Creating a Volume Group
+echo "Creating a Volume Group:"
+vgcreate vg01 /dev/sdb1
+
+# Displaying Volume Group Information
+echo "Volume Group Information:"
+vgdisplay vg01
+
+# Creating a Logical Volume
+echo "Creating a Logical Volume:"
+lvcreate -L 19.99G -n lv01 vg01
+
+# Displaying Logical Volume Information
+echo "Logical Volume Information:"
+lvdisplay /dev/vg01/lv01
+
+# Formatting the Logical Volume
+echo "Formatting the Logical Volume:"
+mkfs.ext4 /dev/vg01/lv01
+
+# Mounting the Logical Volume
+echo "Mounting the Logical Volume:"
+mkdir /data
+mount /dev/vg01/lv01 /data
+
+# Verifying the Mount
+echo "Verifying the Mount:"
+df -Th /data

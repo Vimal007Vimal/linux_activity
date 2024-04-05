@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Step 2: Install Extra Packages for Linux (EPEL)
+echo "Installing EPEL repository..."
+sudo yum install -y epel-release
+
+# Step 3: Install Nginx
+echo "Installing Nginx..."
+sudo yum -y install nginx
+
+# Step 4: Start Nginx Service
+echo "Starting Nginx service..."
+sudo systemctl start nginx
+
+# Check Nginx status
+echo "Checking Nginx status..."
+sudo systemctl status nginx
+
+# Step 5: Configure Nginx to Start on Boot
+echo "Configuring Nginx to start on boot..."
+sudo systemctl enable nginx
+
+# Step 6: Configure Firewall to Allow Traffic
+echo "Configuring firewall to allow HTTP and HTTPS traffic..."
+sudo firewall-cmd --zone=public --permanent --add-service=http
+sudo firewall-cmd --zone=public --permanent --add-service=https
+sudo firewall-cmd --reload
+
+echo "Nginx setup completed."
+echo "check your ipadderss in browser"

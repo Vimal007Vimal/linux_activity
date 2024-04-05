@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Install vsftpd Package
+echo "Installing vsftpd Package..."
+sudo yum install -y vsftpd
+
+# Edit vsftpd Configuration File
+echo "Editing vsftpd Configuration File..."
+sudo sed -i 's/anonymous_enable=YES/anonymous_enable=NO/' /etc/vsftpd/vsftpd.conf
+
+# Start FTP Server
+echo "Starting FTP Server..."
+sudo systemctl start vsftpd
+
+# Enable FTP Server
+echo "Enabling FTP Server..."
+sudo systemctl enable vsftpd
+
+# Configure Firewall
+echo "Configuring Firewall..."
+sudo firewall-cmd --zone=public --permanent --add-port=21/tcp
+sudo firewall-cmd --zone=public --permanent --add-service=ftp
+sudo firewall-cmd --reload
+
+# Create User
+echo "Creating user..."
+read -p "Enter username: " username
+sudo adduser "$username"
+sudo passwd "$username"
+
+# Create Folder and File for User
+echo "Creating folder and file for user..."
+sudo su - "$username" -c 'mkdir folder && touch folder/file'
+
+# Check IP Address
+echo "Checking IP Address..."
+ifconfig
+
+echo "FTP server setup completed."
